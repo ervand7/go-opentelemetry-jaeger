@@ -1,0 +1,53 @@
+services:
+  service-a:
+    build: ./service-a
+    container_name: service-a
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+      - OTEL_SERVICE_NAME=service-a
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - service-b
+      - otel-collector
+
+  service-b:
+    build: ./service-b
+    container_name: service-b
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+      - OTEL_SERVICE_NAME=service-b
+      - PORT=8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"        # OTLP gRPC input (optional to expose)
+      - "4318:4318"        # OTLP HTTP input (optional to expose)
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "14268:14268"   # Jaeger Collector (keep for legacy)
+      - "9411:9411"     # ✅ Zipkin port
+
+  debug:
+    image: busybox
+    command: sleep 3600
+    depends_on:
+      - otel-collector
+    networks:
+      - default
+
