@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,6 +21,18 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+type ServiceBResponse struct {
+	Service   string `json:"service"`
+	Operation string `json:"operation"`
+	Name      string `json:"name"`
+	Message   string `json:"message"`
+}
+
+type CombinedResponse struct {
+	Service       string           `json:"service"`        // service-a
+	CalledService ServiceBResponse `json:"called_service"` // nested service-b response
+}
 
 func main() {
 	ctx := context.Background()
@@ -60,9 +73,19 @@ func main() {
 		}
 		defer resp.Body.Close()
 
+		var serviceBResp ServiceBResponse
+		if err := json.NewDecoder(resp.Body).Decode(&serviceBResp); err != nil {
+			http.Error(w, "invalid JSON from service-b", http.StatusInternalServerError)
+			return
+		}
+
+		result := CombinedResponse{
+			Service:       "service-a",
+			CalledService: serviceBResp,
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"service":"service-a","called":"service-b","status":"%s"}`, resp.Status)))
+		_ = json.NewEncoder(w).Encode(result)
 	}), "hello"))
 
 	server := &http.Server{
