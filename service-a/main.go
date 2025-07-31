@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -63,15 +64,19 @@ func main() {
 		}
 
 		// Call service-b with context propagation
-		req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://service-b:8081/work?name=%s", name), nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://service-b:8081/work?name=%s", name), nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		// client spans will be created by the otelhttp transport
 		resp, err := client.Do(req)
 		if err != nil {
-			http.Error(w, "service-b error: "+err.Error(), http.StatusBadGateway)
+			http.Error(w, fmt.Sprintf("service-b error: %s", err.Error()), http.StatusBadGateway)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		var serviceBResp ServiceBResponse
 		if err := json.NewDecoder(resp.Body).Decode(&serviceBResp); err != nil {
@@ -94,7 +99,7 @@ func main() {
 	}
 
 	log.Printf("service-a listening on :%s", port)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err = server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("server error: %v", err)
 	}
 }
