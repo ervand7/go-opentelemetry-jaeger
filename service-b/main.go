@@ -100,6 +100,7 @@ func getenv(k, def string) string {
 func setupTracerProvider(ctx context.Context, serviceName, otelEndpoint string) (func(ctx context.Context) error, error) {
 	driver := otlptracegrpc.NewClient(
 		otlptracegrpc.WithEndpoint(otelEndpoint),
+		otlptracegrpc.WithInsecure(),
 		otlptracegrpc.WithDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
 	)
 	exp, err := otlptrace.New(ctx, driver)

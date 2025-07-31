@@ -5,20 +5,13 @@ receivers:
       http:
 
 exporters:
-  zipkin:
-    endpoint: http://jaeger:9411/api/v2/spans
-
-  logging:  # ✅ add this block
-    loglevel: debug
-
-
-processors:
-  batch:
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [zipkin, logging]
-
+      exporters: [otlp]

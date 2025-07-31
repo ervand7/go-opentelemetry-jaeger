@@ -1,4 +1,4 @@
-# OpenTelemetry Tracing Demo (Go + Docker)
+# OpenTelemetry Tracing (Go + Docker)
 Two Go microservices (`service-a` and `service-b`) with **OpenTelemetry** tracing enabled.  
 Traffic flows: **client → service-a → service-b**. Traces are exported via **OTLP** to the **OpenTelemetry Collector**, then sent to **Jaeger** for visualization.
 
@@ -18,21 +18,6 @@ Traffic flows: **client → service-a → service-b**. Traces are exported via *
    v
  Jaeger (UI on http://localhost:16686)
 ```
-
-## What’s included
-- **Two Go services** with:
-  - OTel SDK initialization (resource, tracer provider, propagators)
-  - Incoming HTTP instrumentation (`otelhttp.NewHandler`)
-  - Outgoing HTTP instrumentation (`otelhttp.NewTransport`)
-  - Context propagation between services
-- **OpenTelemetry Collector** configured to:
-  - Receive traces over **OTLP gRPC (:4317)**
-  - Export to **Jaeger** and also log them
-- **Jaeger all-in-one** for viewing traces
-- **Docker Compose** to run everything with one command
-
-## Prerequisites
-- Docker + Docker Compose
 
 ## Quick start
 ```bash
@@ -107,7 +92,3 @@ docker compose down -v
 - Latency breakdown (where time is spent)
 - Error root-cause pinpointing
 - Easy correlation with metrics and logs (if added later)
-
----
-
-**Enjoy!** If you’d like, I can extend this to include metrics (Prometheus) and logs next.
